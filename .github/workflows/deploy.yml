@@ -60,17 +60,16 @@ jobs:
             APP_DIR="/home/${{ secrets.SERVER_USER }}/app"
             JAR_FILE=$(ls $APP_DIR/build/libs/*.jar | grep -v plain)
 
+            echo ">>> JAR 파일 확인"
+            ls -la $APP_DIR/build/libs/
+
             echo ">>> 기존 프로세스 종료"
             pkill -f "java -jar" || true
             sleep 2
 
             echo ">>> 새 애플리케이션 시작"
-            nohup java -jar $JAR_FILE \
-              --spring.profiles.active=prod \
-              > $APP_DIR/app.log 2>&1 &
+            setsid nohup java -jar $JAR_FILE --spring.profiles.active=prod < /dev/null >> $APP_DIR/app.log 2>&1 &
 
-            # ✅ 핵심: 세션 분리
-            disown
-            sleep 1
-
-            echo ">>> 배포 완료"
+            sleep 2
+            echo ">>> 실행 중인 프로세스 확인"
+            pgrep -f "java -jar" && echo "✅ 배포 성공" || echo "❌ 프로세스 없음"
